@@ -5,9 +5,12 @@ This library currently only supports MSP430G2533 and MSP430F5529.
 
 CounterLib leverages the Timer_A peripheral and uses pin P1.0 as external clock input for a 16 bit counter. 
 
+## Installation
+
 To install this libray in Energia, copy the folder "CounterLib" into "<user home>/Documents/Energia/libraries" and restart Energia.
 
-CounterLin is implemented as C++ template.
+## Usage
+
 To create an instance of the counter, simply declare it as a global variable like this:
 
 	Counter<> MyCounter
