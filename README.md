@@ -1,9 +1,10 @@
 # CounterLib-Energia
-A library for Energia that counts signal pulses, like for example a clock, received from an external source.
+A library for Energia that counts signal pulses received from an external source, like for example a clock.
 
 This library currently only supports MSP430G2533 and MSP430F5529.
 
 CounterLib leverages the Timer_A peripheral and uses pin P1.0 as external clock input for a 16 bit counter. 
+Using a Timer instead of interrupts allows to count very fast pulses.
 
 ## Installation
 
