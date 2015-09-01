@@ -43,9 +43,9 @@ Below a list of supported timers and their pins. Note that not all MCUs support 
 
 ### Dividers
 
-For accurate measurement you want long measurement period, for example 100ms. But fast signals will overflow the
+For accurate counting you want a long measurement period, for example 100ms. But fast signals will overflow the
 16 bit counter. For example a 1 MHz signal will count to 65535 (the maximum for 16 bit) in just 65 ms. This is when
-clock dividers become handy.
+clock dividers come in handy.
 
 Depending on the MCU, the timers have one (G2533) or two (F5529) dividers. The dividers can be set as optional
 parameter of the start() function.
@@ -118,12 +118,17 @@ To measure signals in that range, you could adjust the example as follows:
     }
 
 With the shorter measurement period for fast signals, the inaccuracy due to overhead becomes more significant. 
-For example, with a signal at 740 KHz my test setup reports 795 KHz. Because this overhead is fairly constant,
-we can compensate that error by measuring a known signal and then add/subtract the measured difference, e.g.
-by changing the line above to:
+For example, with a signal at 740 KHz my test setup reports 795 KHz. 
 
-    Serial.print(((MyCounter.read() + 5) / 10) - 55);
+This is when dividers become useful. By measuring a for long period, the effect of the overhead is reduced. When
+dividing 1 MHz by 8, the counter will only reach 12500 in 100ms, a value that fits well within the 16 bit counter.
 
+	MyCounter.reset(8);
+	delay(100);
+	Serial.print((MyCounter.read() + 5) / 100 * 8);
+
+With the minor changes above, my test setup now reports xx KHz. (test to be done)
+	
 ## Caveats
 * P1.0 is also used for LED1, you may need to remove the LED1 jumper if the signal source is not strong enough to drive the LED
 * On the MSP430F5529LP, you have to use the upper pin of the LED1 jumper to input the signal
@@ -131,4 +136,5 @@ by changing the line above to:
 * This library may not play nicely with other libraries or functionality that uses Timer A (PWM / analogWrite?)
 
 ## Todo
+* Proper testing of all the options
 * Support for other MCUs and LaunchPads
