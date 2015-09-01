@@ -3,18 +3,19 @@ A library for Energia that counts signal pulses received from an external source
 
 This library currently only supports MSP430G2533 and MSP430F5529.
 
-CounterLib leverages the Timer_A peripheral and uses pin P1.0 as external clock input for a 16 bit counter. 
+CounterLib leverages timer peripherals and uses I/O as external clock input for a 16 bit counter. 
 Using a Timer instead of interrupts allows to count very fast pulses.
 
 ## Installation
 
-To install this libray in Energia, copy the folder "CounterLib" into "<user home>/Documents/Energia/libraries" and restart Energia.
+To install this libray in Energia, copy the folder "CounterLib" into "<user home>/Documents/Energia/libraries"
+and restart Energia.
 
 ## Usage
 
 To create an instance of the counter, simply declare it as a global variable like this:
 
-	Counter<> MyCounter
+	Counter<> MyCounter;	// create a counter that counts pulses on pin P1.0
 
 Once created, the counter has 5 functions:
 * start() initializes the timer peripheral and I/O pin and starts the counter
@@ -23,23 +24,64 @@ Once created, the counter has 5 functions:
 * reset() resets the counter to 0, the counter keeps running
 * readAndReset() reads the current value and resets the counter to 0
 
+### Timers and Pins
+
+By default, the counter will use pin P1.0 as input. Some MCUs have multiple timer peripherals linked to different
+input pins. The timer peripheral, and therefore indirectly the input pin, can be selected with an optional
+parameter when declaring the counter. For example:
+
+	Counter<CL_TimerA1> MyCounter; // use timer A1, which uses pin P1.6 as input
+	
+Below a list of supported timers and their pins. Note that not all MCUs support all timers.
+
+| Timer      	| Pin  	| G2533 	| F5529 	|
+|------------	|------	|-------	|-------	|
+| CL_TimerA0 	| P1.0 	|  yes  	|  yes  	|
+| CL_TimerA1 	| P1.6 	|   no  	|  yes  	|
+| CL_TimerA2 	| P2.2 	|   no  	|  yes  	|
+| CL_TimerB0 	| P7.7 	|   no  	|  yes  	|
+
+### Dividers
+
+For accurate measurement you want long measurement period, for example 100ms. But fast signals will overflow the
+16 bit counter. For example a 1 MHz signal will count to 65535 (the maximum for 16 bit) in just 65 ms. This is when
+clock dividers become handy.
+
+Depending on the MCU, the timers have one (G2533) or two (F5529) dividers. The dividers can be set as optional
+parameter of the start() function.
+
+	MyCounter.start(divider1, divider2);
+	
+divider1 can have the fixed values of CL_Div1 (divide by 1, the default), CL_Div2 (divide by 2), CL_Div4 (divide by 4)
+or CL_Div8 (divide by 8). For example, to increase the counter on every 4th tick of a clock, start the counter like this:
+
+	MyCounter.start(CL_Div4);	// only count every 4th pulse
+	
+divider2 can be added if you need to slow things down even more. Valid values for divider2 are between 1 and 8, with 1
+the default if divider2 is not specified. Note that the dividers are applied after each other, so the total divisor will
+be divider1 * divider2. For example, the following counter will only count every 10th pulse:
+
+	MyCounter.start(CL_Div2, 5);	// divider set to 2*5=10
+
+##Examples
+
 Here is a simple example that resets the counter, waits one second, reads and displays the value of the counter,
 and waits another second before restarting the loop.
 
-    Counter<> MyCounter;
+    Counter<> MyCounter;	// create counter that counts pulses on pin P1.0
     
     void setup()
     {
       Serial.begin(9600);
-      MyCounter.start();
+      MyCounter.start();	// start counter
     }
     
     void loop()
     {
-      MyCounter.reset();
-      delay(1000);
-      Serial.println(MyCounter.read());
-	  delay(1000);
+      MyCounter.reset();				// reset counter to zero
+      delay(1000);						// wait one second
+      Serial.println(MyCounter.read());	// read number of pulses during the last second
+	  delay(1000);						// wait another second
     }
 
 Connected to the 1KHz calibration signal output of my oscilloscope (Rigol DS1054Z) I get the following output:
@@ -89,5 +131,4 @@ by changing the line above to:
 * This library may not play nicely with other libraries or functionality that uses Timer A (PWM / analogWrite?)
 
 ## Todo
-* Configurable /2, /4 and /8 clock dividers, currently the counter is increased on each clock
 * Support for other MCUs and LaunchPads
