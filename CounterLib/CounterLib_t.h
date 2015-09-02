@@ -36,7 +36,7 @@ public:
 #if defined(__MSP430G2553)
   void start(CL_DIVIDER_t divider1 = CL_Div1)
 #elif defined(__MSP430F5529)
-  void start(CL_DIVIDER_t divider1 = CL_Div1, uint8_t divider2 = 0)
+  void start(CL_DIVIDER_t divider1 = CL_Div1, uint8_t divider2 = 1)
 #else
   #error This microcontroller is not supported by CounterLib.
 #endif
