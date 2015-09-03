@@ -3,6 +3,8 @@ CounterLib_t.h - Simple counter library for Energia with MSP430 microcontrollers
 Created by Adrian Studer, August 2015.
 
 Distributed under MIT License, see license.txt for details.
+
+Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad
 */
 
 #ifndef CounterLib_T_h
@@ -13,11 +15,19 @@ Distributed under MIT License, see license.txt for details.
 
 enum CL_TIMER_t
 {
-  CL_TimerA0,    // G2533 P1.0, F5529 P1.0
+#if defined(__MSP430G2553)
+  CL_TimerA0     // G2533 P1.0
+#endif
 #if defined(__MSP430F5529)
+  CL_TimerA0,    // F5529 P1.0
   CL_TimerA1,    // F5529 P1.6
   CL_TimerA2,    // FF529 P2.2
-  CL_TimerB0     // F5529 P7.7 (note: P7.7 not broken out on LP, also available via port mapping as PM_TB0CLK)
+  CL_TimerB0     // F5529 P7.7 (note: pin not broken out on LP, also available via port mapping as PM_TB0CLK)
+#endif
+#if defined(__MSP430FR5969)
+  CL_TimerA0,    // F5969 P1.2
+  CL_TimerA1,    // F5969 P1.1 (note: pin not easily accessible on LP)
+  CL_TimerB0     // F5969 P2.0 (note: pin not easily accessible on LP)
 #endif
 };
 
@@ -37,12 +47,17 @@ public:
   void start(CL_DIVIDER_t divider1 = CL_Div1)
 #elif defined(__MSP430F5529)
   void start(CL_DIVIDER_t divider1 = CL_Div1, uint8_t divider2 = 1)
+#elif defined(__MSP430FR5969)
+  void start(CL_DIVIDER_t divider1 = CL_Div1, uint8_t divider2 = 1)
 #else
-  #error This microcontroller is not supported by CounterLib.
+  #error 1) This microcontroller is not supported by CounterLib.
 #endif
   {
-    uint16_t divider1_bits = divider1;    // basic divider can be 1, 2, 4 or 8
+    uint16_t divider1_bits = divider1;               // basic divider can be 1, 2, 4 or 8
 #if defined(__MSP430F5529)
+    uint16_t divider2_bits = (divider2 - 1) & 0x07;  // extended divider can be 1 to 8
+#endif
+#if defined(__MSP430FR5969)
     uint16_t divider2_bits = (divider2 - 1) & 0x07;  // extended divider can be 1 to 8
 #endif
 
@@ -101,8 +116,43 @@ public:
         TB0CTL |= TBCLR | MC1;    // reset counter and start timer in continuous mode
         break;
     }
+#elif defined(__MSP430FR5969)
+    switch(timer)
+    {
+      // configure timer to count upwards using timer CLK input from pin
+      // 1. setup pin
+      // 2. halt timer, disable interrupts, TA0CLK clock source, reset counter
+      // 3. start timer in continuous mode
+      case CL_TimerA0:      // timer A0
+      default:
+        P1DIR  &= ~BIT2;    // set pin 1.2 as input
+        P1SEL0 &= ~BIT2;    // select function TA0CLK
+        P1SEL1 |= BIT2;
+        TA0CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
+        TA0EX0 = (TA0EX0 & 0xfff8) | divider2_bits;  // set extended divider
+        TA0CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
+        break;
+
+      case CL_TimerA1:     // timer A1
+        P1DIR  &= ~BIT1;   // set pin 1.1 as input
+        P1SEL0 &= ~BIT1;   // select function TA1CLK
+        P1SEL1 |= BIT1;
+        TA1CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
+        TA1EX0 = (TA1EX0 & 0xfff8) | divider2_bits;  // set extended divider
+        TA1CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
+        break;
+        
+      case CL_TimerB0:     // timer B0
+        P2DIR  &= ~BIT0;   // set pin 2.0 as input
+        P2SEL0 |= BIT0;    // select function TB0CLK
+        P2SEL1 |= BIT0;
+        TB0CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
+        TB0EX0 = (TB0EX0 & 0xfff8) | divider2_bits;  // set extended divider
+        TB0CTL |= TBCLR | MC1;    // reset counter and start timer in continuous mode
+        break;
+    }
 #else
-  #error This microcontroller is not supported by CounterLib.
+  #error 2) This microcontroller is not supported by CounterLib.
 #endif
   }
 
@@ -132,8 +182,23 @@ public:
         TB0CTL &= ~(MC0+MC1);
         break;
     }
+#elif defined(__MSP430FR5969)
+    switch(timer)
+    {
+      // halt timer, but don't reset counter
+      case CL_TimerA0:      // timer A0
+      default:
+        TA0CTL &= ~(MC0+MC1);
+        break;
+      case CL_TimerA1:      // timer A1
+        TA1CTL &= ~(MC0+MC1);
+        break;
+      case CL_TimerB0:      // timer B0
+        TB0CTL &= ~(MC0+MC1);
+        break;
+    }
 #else
-  #error This microcontroller is not supported by CounterLib.
+  #error 3) This microcontroller is not supported by CounterLib.
 #endif
   }
 
@@ -163,8 +228,23 @@ public:
         TB0CTL |= TBCLR;
         break;
     }
+#elif defined(__MSP430FR5969)
+    switch(timer)
+    {
+      // reset counter to zero, counter keeps running
+      case CL_TimerA0:      // timer A0
+      default:
+        TA0CTL |= TACLR;
+        break;
+      case CL_TimerA1:      // timer A1
+        TA1CTL |= TACLR;
+        break;
+      case CL_TimerB0:      // timer B0
+        TB0CTL |= TBCLR;
+        break;
+    }
 #else
-  #error This microcontroller is not supported by CounterLib.
+  #error 4) This microcontroller is not supported by CounterLib.
 #endif
   }
 
@@ -194,8 +274,23 @@ public:
         return TB0R;
         break;
     }
+#elif defined(__MSP430FR5969)
+    switch(timer)
+    {
+      // read current value in counter
+      case CL_TimerA0:      // timer A0
+      default:
+        return TA0R;
+        break;
+      case CL_TimerA1:      // timer A1
+        return TA1R;
+        break;
+      case CL_TimerB0:      // timer B0
+        return TB0R;
+        break;
+    }
 #else
-  #error This microcontroller is not supported by CounterLib.
+  #error 5) This microcontroller is not supported by CounterLib.
 #endif
   }
 
@@ -229,8 +324,25 @@ public:
         TB0CTL |= TBCLR;      // reset counter
         break;
     }
+#elif defined(__MSP430FR5969)
+    switch(timer)
+    {
+      case CL_TimerA0:        // timer A0
+      default:
+        counter_value = TA0R; // store counter value
+        TA0CTL |= TACLR;      // reset counter
+        break;
+      case CL_TimerA1:        // timer A1
+        counter_value = TA1R; // store counter value
+        TA1CTL |= TACLR;      // reset counter
+        break;
+      case CL_TimerB0:        // timer B0
+        counter_value = TB0R; // store counter value
+        TB0CTL |= TBCLR;      // reset counter
+        break;
+    }
 #else
-  #error This microcontroller is not supported by CounterLib.
+  #error 6) This microcontroller is not supported by CounterLib.
 #endif
       return counter_value;   // return counter value
   }
