@@ -4,7 +4,7 @@ Created by Adrian Studer, August 2015.
 
 Distributed under MIT License, see license.txt for details.
 
-Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad
+Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad and bug fixes
 */
 
 #ifndef CounterLib_T_h
@@ -13,337 +13,294 @@ Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad
 #include <inttypes.h>
 #include <Energia.h>
 
-enum CL_TIMER_t
-{
-#if defined(__MSP430G2553)
-  CL_TimerA0     // G2533 P1.0
+// definition of timers and their pins for MSP430G2553
+#if defined(__MSP430G2553__)
+
+  enum CL_TIMER_t
+  {
+    CL_TimerA0     // G2553 P1.0
+  };
+  
+  // clk pin initalization of each supported timer
+  #define CL_TACLK_PIN_SETUP  { P1DIR &= ~BIT0; P1SEL |= BIT0; P1SEL2 &= ~BIT0; }
+
+// definition of timers and their pins for MSP430F5529
+#elif defined(__MSP430F5529__)
+
+  enum CL_TIMER_t
+  {
+    CL_TimerA0,    // F5529 P1.0
+    CL_TimerA1,    // F5529 P1.6
+    CL_TimerA2,    // FF529 P2.2
+    CL_TimerB0     // F5529 P7.7 (note: pin not easily accessible on LP, supports port mapping as PM_TB0CLK)
+  };
+  
+  // clk pin initalization of each supported timer
+  #define CL_TA0CLK_PIN_SETUP  { P1DIR &= ~BIT0; P1SEL |= BIT0; }
+  #define CL_TA1CLK_PIN_SETUP  { P1DIR &= ~BIT6; P1SEL |= BIT6; }
+  #define CL_TA2CLK_PIN_SETUP  { P2DIR &= ~BIT2; P2SEL |= BIT2; }
+  #define CL_TB0CLK_PIN_SETUP  { P7DIR &= ~BIT7; P7SEL |= BIT7; }
+
+// definition of timers and their pins for MSP430FR5969
+#elif defined(__MSP430FR5969__)
+
+  enum CL_TIMER_t
+  {
+    CL_TimerA0,    // FR5969 P1.2
+    CL_TimerA1,    // FR5969 P1.1 (note: pin not easily accessible on LP)
+    CL_TimerB0     // FR5969 P2.0 (note: pin not easily accessible on LP)
+  };
+  
+  // clk pin initalization of each supported timer
+  #define CL_TA0CLK_PIN_SETUP  { P1DIR &= ~BIT2; P1SEL0 &= ~BIT2; P1SEL1 |= BIT2; }
+  #define CL_TA1CLK_PIN_SETUP  { P1DIR &= ~BIT1; P1SEL0 &= ~BIT1; P1SEL1 |= BIT1; }
+  #define CL_TB0CLK_PIN_SETUP  { P2DIR &= ~BIT0; P2SEL0 |= BIT0; P2SEL1 |= BIT0; }
+
+#else
+  #error 1) This microcontroller is not supported by CounterLib
 #endif
-#if defined(__MSP430F5529)
-  CL_TimerA0,    // F5529 P1.0
-  CL_TimerA1,    // F5529 P1.6
-  CL_TimerA2,    // FF529 P2.2
-  CL_TimerB0     // F5529 P7.7 (note: pin not broken out on LP, also available via port mapping as PM_TB0CLK)
-#endif
-#if defined(__MSP430FR5969)
-  CL_TimerA0,    // F5969 P1.2
-  CL_TimerA1,    // F5969 P1.1 (note: pin not easily accessible on LP)
-  CL_TimerB0     // F5969 P2.0 (note: pin not easily accessible on LP)
-#endif
-};
 
 enum CL_DIVIDER_t
 {
-  CL_Div1 = 0,        // divide by 1
-  CL_Div2 = ID0,      // divide by 2
-  CL_Div4 = ID1,      // divide by 4
-  CL_Div8 = ID0 | ID1 // divide by 8 
+  CL_Div1 = ID_0,     // divide by 1
+  CL_Div2 = ID_1,     // divide by 2
+  CL_Div4 = ID_2,     // divide by 4
+  CL_Div8 = ID_3      // divide by 8 
 };
+
+#if defined(__MSP430_HAS_TA3__)
+  // define anything that's special about TA3
+#elif defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
+  #define CL_DIVIDER_EX  // these timers support a 2nd divider
+#else
+  #error 2) This microcontroller's timer peripheral is not supported by CounterLib
+#endif
 
 template <CL_TIMER_t timer = CL_TimerA0>
 struct Counter {
 
 public:
-#if defined(__MSP430G2553)
-  void start(CL_DIVIDER_t divider1 = CL_Div1)
-#elif defined(__MSP430F5529)
+
+#if defined(CL_DIVIDER_EX)
   void start(CL_DIVIDER_t divider1 = CL_Div1, uint8_t divider2 = 1)
-#elif defined(__MSP430FR5969)
-  void start(CL_DIVIDER_t divider1 = CL_Div1, uint8_t divider2 = 1)
-#else
-  #error 1) This microcontroller is not supported by CounterLib.
-#endif
   {
     uint16_t divider1_bits = divider1;               // basic divider can be 1, 2, 4 or 8
-#if defined(__MSP430F5529)
     uint16_t divider2_bits = (divider2 - 1) & 0x07;  // extended divider can be 1 to 8
-#endif
-#if defined(__MSP430FR5969)
-    uint16_t divider2_bits = (divider2 - 1) & 0x07;  // extended divider can be 1 to 8
+#else
+  void start(CL_DIVIDER_t divider1 = CL_Div1)
+  {
+    uint16_t divider1_bits = divider1;    // basic divider can be 1, 2, 4 or 8
 #endif
 
-#if defined(__MSP430G2553)
+  #if defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
-      // set pin 1.0 as input, select function TA0CLK
-      P1DIR &= ~BIT0;
-      P1SEL |= BIT0;
-      P2SEL &= BIT0;
-      
+      // set pin as input, select function TA0CLK
+      CL_TACLK_PIN_SETUP;
+
       // configure timer A0 to count upwards based on TA0CLK input
       // halt timer, disable interrupts, TACLK clock source, reset counter
       TACTL = TACLR | divider1_bits;  // clears MCx, TAIE, TASSEL
  
       // start timer in continuous mode
-      TACTL |= MC1;
+      TACTL |= MC_2;
     }
-#elif defined(__MSP430F5529)
+  #else
     switch(timer)
     {
       // configure timer to count upwards using timer CLK input from pin
       // 1. setup pin
       // 2. halt timer, disable interrupts, TA0CLK clock source, reset counter
       // 3. start timer in continuous mode
-      case CL_TimerA0:    // timer A0
       default:
-        P1DIR &= ~BIT0;   // set pin 1.0 as input
-        P1SEL |= BIT0;    // select function TA0CLK
+    #if defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
+      case CL_TimerA0:    // timer A0
+        CL_TA0CLK_PIN_SETUP;      // set pin as input, select function TA0CLK
         TA0CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
         TA0EX0 = (TA0EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TA0CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
+        TA0CTL |= TACLR | MC_2;   // reset counter and start timer in continuous mode
         break;
-
+    #endif
+    #if defined(__MSP430_HAS_T1A3__)
       case CL_TimerA1:    // timer A1
-        P1DIR &= ~BIT6;   // set pin 1.6 as input
-        P1SEL |= BIT6;    // select function TA1CLK
+        CL_TA1CLK_PIN_SETUP;      // set pin as input, select function TA1CLK
         TA1CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
         TA1EX0 = (TA1EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TA1CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
+        TA1CTL |= TACLR | MC_2;   // reset counter and start timer in continuous mode
         break;
-
+    #endif
+    #if defined(__MSP430_HAS_T2A3__)
       case CL_TimerA2:    // timer A2
-        P2DIR &= ~BIT2;   // set pin 2.2 as input
-        P2SEL |= BIT2;    // select function TA2CLK
+        CL_TA2CLK_PIN_SETUP;      // set pin as input, select function TA2CLK
         TA2CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
         TA2EX0 = (TA2EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TA2CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
+        TA2CTL |= TACLR | MC_2;   // reset counter and start timer in continuous mode
         break;
-        
+    #endif
+    #if defined(__MSP430_HAS_T0B7__)
       case CL_TimerB0:    // timer B0
-        P7DIR &= ~BIT7;   // set pin 7.7 as input
-        P7SEL |= BIT7;    // select function TB0CLK
+        CL_TB0CLK_PIN_SETUP;      // set pin as input, select function TB0CLK
         TB0CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
         TB0EX0 = (TB0EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TB0CTL |= TBCLR | MC1;    // reset counter and start timer in continuous mode
+        TB0CTL |= TBCLR | MC_2;   // reset counter and start timer in continuous mode
         break;
+    #endif
     }
-#elif defined(__MSP430FR5969)
-    switch(timer)
-    {
-      // configure timer to count upwards using timer CLK input from pin
-      // 1. setup pin
-      // 2. halt timer, disable interrupts, TA0CLK clock source, reset counter
-      // 3. start timer in continuous mode
-      case CL_TimerA0:      // timer A0
-      default:
-        P1DIR  &= ~BIT2;    // set pin 1.2 as input
-        P1SEL0 &= ~BIT2;    // select function TA0CLK
-        P1SEL1 |= BIT2;
-        TA0CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
-        TA0EX0 = (TA0EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TA0CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
-        break;
-
-      case CL_TimerA1:     // timer A1
-        P1DIR  &= ~BIT1;   // set pin 1.1 as input
-        P1SEL0 &= ~BIT1;   // select function TA1CLK
-        P1SEL1 |= BIT1;
-        TA1CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
-        TA1EX0 = (TA1EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TA1CTL |= TACLR | MC1;    // reset counter and start timer in continuous mode
-        break;
-        
-      case CL_TimerB0:     // timer B0
-        P2DIR  &= ~BIT0;   // set pin 2.0 as input
-        P2SEL0 |= BIT0;    // select function TB0CLK
-        P2SEL1 |= BIT0;
-        TB0CTL = divider1_bits;   // set main divider, clears MCx, TAIE, TASSEL
-        TB0EX0 = (TB0EX0 & 0xfff8) | divider2_bits;  // set extended divider
-        TB0CTL |= TBCLR | MC1;    // reset counter and start timer in continuous mode
-        break;
-    }
-#else
-  #error 2) This microcontroller is not supported by CounterLib.
-#endif
+  #endif 
   }
 
   void stop(void)
   {
-#if defined(__MSP430G2553)
+  #if defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // halt timer, but don't reset counter
-      TACTL &= ~(MC0+MC1);  // clears MCx
+      TACTL &= ~(MC_3);  // clears MCx
     }
-#elif defined(__MSP430F5529)
+  #else
     switch(timer)
     {
       // halt timer, but don't reset counter
-      case CL_TimerA0:      // timer A0
       default:
-        TA0CTL &= ~(MC0+MC1);
+    #if defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
+      case CL_TimerA0:      // timer A0
+        TA0CTL &= ~(MC_3);
         break;
+    #endif
+    #if defined(__MSP430_HAS_T1A3__)
       case CL_TimerA1:      // timer A1
-        TA1CTL &= ~(MC0+MC1);
+        TA1CTL &= ~(MC_3);
         break;
+    #endif
+    #if defined(__MSP430_HAS_T2A3__)
       case CL_TimerA2:      // timer A2
-        TA2CTL &= ~(MC0+MC1);
+        TA2CTL &= ~(MC_3);
         break;
+    #endif
+    #if defined(__MSP430_HAS_T0B7__)
       case CL_TimerB0:      // timer B0
-        TB0CTL &= ~(MC0+MC1);
+        TB0CTL &= ~(MC_3);
         break;
+    #endif
     }
-#elif defined(__MSP430FR5969)
-    switch(timer)
-    {
-      // halt timer, but don't reset counter
-      case CL_TimerA0:      // timer A0
-      default:
-        TA0CTL &= ~(MC0+MC1);
-        break;
-      case CL_TimerA1:      // timer A1
-        TA1CTL &= ~(MC0+MC1);
-        break;
-      case CL_TimerB0:      // timer B0
-        TB0CTL &= ~(MC0+MC1);
-        break;
-    }
-#else
-  #error 3) This microcontroller is not supported by CounterLib.
-#endif
+  #endif
   }
 
   void reset(void)
   {
-#if defined(__MSP430G2553)
+  #if defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // reset counter to zero, counter keeps running
       TACTL |= TACLR;
     }
-#elif defined(__MSP430F5529)
+  #else
     switch(timer)
     {
       // reset counter to zero, counter keeps running
-      case CL_TimerA0:      // timer A0
       default:
+    #if defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
+      case CL_TimerA0:      // timer A0
         TA0CTL |= TACLR;
         break;
+    #endif
+    #if defined(__MSP430_HAS_T1A3__)
       case CL_TimerA1:      // timer A1
         TA1CTL |= TACLR;
         break;
+    #endif
+    #if defined(__MSP430_HAS_T2A3__)
       case CL_TimerA2:      // timer A2
         TA2CTL |= TACLR;
         break;
+    #endif
+    #if defined(__MSP430_HAS_T0B7__)
       case CL_TimerB0:      // timer B0
         TB0CTL |= TBCLR;
         break;
+    #endif
     }
-#elif defined(__MSP430FR5969)
-    switch(timer)
-    {
-      // reset counter to zero, counter keeps running
-      case CL_TimerA0:      // timer A0
-      default:
-        TA0CTL |= TACLR;
-        break;
-      case CL_TimerA1:      // timer A1
-        TA1CTL |= TACLR;
-        break;
-      case CL_TimerB0:      // timer B0
-        TB0CTL |= TBCLR;
-        break;
-    }
-#else
-  #error 4) This microcontroller is not supported by CounterLib.
-#endif
+  #endif
   }
 
   uint16_t read(void)
   {
-#if defined(__MSP430G2553)
+  #if defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // read current value in counter
       return TAR;
     }
-#elif defined(__MSP430F5529)
+  #else
     switch(timer)
     {
       // read current value in counter
-      case CL_TimerA0:      // timer A0
       default:
+    #if defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
+      case CL_TimerA0:      // timer A0
         return TA0R;
         break;
+    #endif
+    #if defined(__MSP430_HAS_T1A3__)
       case CL_TimerA1:      // timer A1
         return TA1R;
         break;
+    #endif
+    #if defined(__MSP430_HAS_T2A3__)
       case CL_TimerA2:      // timer A2
         return TA2R;
         break;
+    #endif
+    #if defined(__MSP430_HAS_T0B7__)
       case CL_TimerB0:      // timer B0
         return TB0R;
         break;
+    #endif
     }
-#elif defined(__MSP430FR5969)
-    switch(timer)
-    {
-      // read current value in counter
-      case CL_TimerA0:      // timer A0
-      default:
-        return TA0R;
-        break;
-      case CL_TimerA1:      // timer A1
-        return TA1R;
-        break;
-      case CL_TimerB0:      // timer B0
-        return TB0R;
-        break;
-    }
-#else
-  #error 5) This microcontroller is not supported by CounterLib.
-#endif
+  #endif
   }
 
   uint16_t readAndReset(void)
   {
     uint16_t counter_value = 0;
-#if defined(__MSP430G2553)
+    
+  #if defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {      
       counter_value = TAR;    // store counter value
       TACTL |= TACLR;         // reset counter
     }
-#elif defined(__MSP430F5529)
+  #else
     switch(timer)
     {
-      case CL_TimerA0:        // timer A0
       default:
+    #if defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
+      case CL_TimerA0:        // timer A0
         counter_value = TA0R; // store counter value
         TA0CTL |= TACLR;      // reset counter
         break;
+    #endif
+    #if defined(__MSP430_HAS_T1A3__)
       case CL_TimerA1:        // timer A1
         counter_value = TA1R; // store counter value
         TA1CTL |= TACLR;      // reset counter
-        break;
+        break;    
+    #endif
+    #if defined(__MSP430_HAS_T2A3__)
       case CL_TimerA2:        // timer A2
         counter_value = TA2R; // store counter value
         TA2CTL |= TACLR;      // reset counter
         break;
+    #endif
+    #if defined(__MSP430_HAS_T0B7__)
       case CL_TimerB0:        // timer B0
         counter_value = TB0R; // store counter value
         TB0CTL |= TBCLR;      // reset counter
         break;
+    #endif
     }
-#elif defined(__MSP430FR5969)
-    switch(timer)
-    {
-      case CL_TimerA0:        // timer A0
-      default:
-        counter_value = TA0R; // store counter value
-        TA0CTL |= TACLR;      // reset counter
-        break;
-      case CL_TimerA1:        // timer A1
-        counter_value = TA1R; // store counter value
-        TA1CTL |= TACLR;      // reset counter
-        break;
-      case CL_TimerB0:        // timer B0
-        counter_value = TB0R; // store counter value
-        TB0CTL |= TBCLR;      // reset counter
-        break;
-    }
-#else
-  #error 6) This microcontroller is not supported by CounterLib.
-#endif
+  #endif
+  
       return counter_value;   // return counter value
   }
 

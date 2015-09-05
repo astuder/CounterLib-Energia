@@ -1,7 +1,7 @@
 # CounterLib-Energia
 A library for Energia that counts signal pulses received from an external source, like for example a clock.
 
-This library currently only supports MSP430G2533, MSP430F5529 and MSP430FR5969
+This library currently only supports MSP430G2553, MSP430F5529 and MSP430FR5969
 
 CounterLib leverages timer peripherals and uses I/O as external clock input for a 16 bit counter. 
 Using a Timer instead of interrupts allows to count very fast pulses.
@@ -34,12 +34,14 @@ parameter when declaring the counter. For example:
 	
 Below a list of supported timers and their pins. Note that not all MCUs support all timers.
 
-| Timer      	| G2533 	| F5529 	| FR5969 	|
+| Timer      	| G2553 	| F5529 	| FR5969 	|
 |------------	|-------	|-------	|--------	|
 | CL_TimerA0 	|  P1.0 	|  P1.0  	|  P1.2  	|
-| CL_TimerA1 	|  n/a  	|  P1.6  	|  P1.1  	|
+| CL_TimerA1 	|  n/a  	|  P1.6  	|  P1.1* 	|
 | CL_TimerA2 	|  n/a  	|  P2.2  	|  n/a   	|
-| CL_TimerB0 	|  n/a  	|  P7.7 	|  P2.0  	|
+| CL_TimerB0 	|  n/a  	|  P7.7*	|  P2.0* 	|
+
+Pins marked with * are not broken out on the LaunchPad.
 
 ### Dividers
 
@@ -47,7 +49,7 @@ For accurate counting you want a long measurement period, for example 100ms. But
 16 bit counter. For example a 1 MHz signal will count to 65535 (the maximum for 16 bit) in just 65 ms. This is when
 clock dividers come in handy.
 
-Depending on the MCU, the timers have one (G2533) or two (F5529, FR5969) dividers. The dividers can be set as optional
+Depending on the MCU, the timers have one (G2553) or two (F5529, FR5969) dividers. The dividers can be set as optional
 parameter of the start() function.
 
 	MyCounter.start(divider1, divider2);
