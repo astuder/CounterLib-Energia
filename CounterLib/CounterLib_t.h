@@ -13,16 +13,27 @@ Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad 
 #include <inttypes.h>
 #include <Energia.h>
 
-// definition of timers and their pins for MSP430G2553
-#if defined(__MSP430G2553__)
+// definition of timer and its pin for MSP430G2553 and MSP430G2452
+#if defined(__MSP430G2553__) || defined(__MSP430G2452__)
 
   enum CL_TIMER_t
   {
-    CL_TimerA0     // G2553 P1.0
+    CL_TimerA0     // G2553, G2452 P1.0
   };
   
-  // clk pin initalization of each supported timer
+  // clk pin initalization for each supported timer
   #define CL_TACLK_PIN_SETUP  { P1DIR &= ~BIT0; P1SEL |= BIT0; P1SEL2 &= ~BIT0; }
+
+// definition of timer and its pin for MSP430G2231
+#elif defined(__MSP430G2231__)
+
+  enum CL_TIMER_t
+  {
+    CL_TimerA0     // G2231 P1.0
+  };
+  
+  // clk pin setup for each supported timer
+  #define CL_TACLK_PIN_SETUP  { P1DIR &= ~BIT0; P1SEL |= BIT0; }
 
 // definition of timers and their pins for MSP430F5529
 #elif defined(__MSP430F5529__)
@@ -35,7 +46,7 @@ Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad 
     CL_TimerB0     // F5529 P7.7 (note: pin not easily accessible on LP, supports port mapping as PM_TB0CLK)
   };
   
-  // clk pin initalization of each supported timer
+  // clk pin setup for each supported timer
   #define CL_TA0CLK_PIN_SETUP  { P1DIR &= ~BIT0; P1SEL |= BIT0; }
   #define CL_TA1CLK_PIN_SETUP  { P1DIR &= ~BIT6; P1SEL |= BIT6; }
   #define CL_TA2CLK_PIN_SETUP  { P2DIR &= ~BIT2; P2SEL |= BIT2; }
@@ -51,7 +62,7 @@ Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad 
     CL_TimerB0     // FR5969 P2.0 (note: pin not easily accessible on LP)
   };
   
-  // clk pin initalization of each supported timer
+  // clk pin setup for each supported timer
   #define CL_TA0CLK_PIN_SETUP  { P1DIR &= ~BIT2; P1SEL0 &= ~BIT2; P1SEL1 |= BIT2; }
   #define CL_TA1CLK_PIN_SETUP  { P1DIR &= ~BIT1; P1SEL0 &= ~BIT1; P1SEL1 |= BIT1; }
   #define CL_TB0CLK_PIN_SETUP  { P2DIR &= ~BIT0; P2SEL0 |= BIT0; P2SEL1 |= BIT0; }
@@ -68,12 +79,13 @@ enum CL_DIVIDER_t
   CL_Div8 = ID_3      // divide by 8 
 };
 
-#if defined(__MSP430_HAS_TA3__)
-  // define anything that's special about TA3
+#if defined(__MSP430_HAS_TA2__) || defined(__MSP430_HAS_TA3__)
+  // define anything that's special about TA2 and TA3
 #elif defined(__MSP430_HAS_T0A3__) || defined(__MSP430_HAS_T0A5__)
   #define CL_DIVIDER_EX  // these timers support a 2nd divider
 #else
   #error 2) This microcontroller's timer peripheral is not supported by CounterLib
+  // to support this microcontroller, you'll need to add timer specific code below
 #endif
 
 template <CL_TIMER_t timer = CL_TimerA0>
@@ -92,7 +104,7 @@ public:
     uint16_t divider1_bits = divider1;    // basic divider can be 1, 2, 4 or 8
 #endif
 
-  #if defined(__MSP430_HAS_TA3__)
+  #if defined(__MSP430_HAS_TA2__) || defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // set pin as input, select function TA0CLK
@@ -151,7 +163,7 @@ public:
 
   void stop(void)
   {
-  #if defined(__MSP430_HAS_TA3__)
+  #if defined(__MSP430_HAS_TA2__) || defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // halt timer, but don't reset counter
@@ -188,7 +200,7 @@ public:
 
   void reset(void)
   {
-  #if defined(__MSP430_HAS_TA3__)
+  #if defined(__MSP430_HAS_TA2__) || defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // reset counter to zero, counter keeps running
@@ -225,7 +237,7 @@ public:
 
   uint16_t read(void)
   {
-  #if defined(__MSP430_HAS_TA3__)
+  #if defined(__MSP430_HAS_TA2__) || defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {
       // read current value in counter
@@ -264,7 +276,7 @@ public:
   {
     uint16_t counter_value = 0;
     
-  #if defined(__MSP430_HAS_TA3__)
+  #if defined(__MSP430_HAS_TA2__) || defined(__MSP430_HAS_TA3__)
     if(timer == CL_TimerA0)
     {      
       counter_value = TAR;    // store counter value
