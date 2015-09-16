@@ -34,14 +34,12 @@ parameter when declaring the counter. For example:
 	
 Below a list of supported timers and their pins. Note that not all MCUs support all timers.
 
-| Timer      	| G2553 	| F5529 	| FR5969 	|
-|            	| G2452 	|       	|        	|
-|            	| G2231 	|       	|        	|
-|------------	|-------	|-------	|--------	|
-| CL_TimerA0 	|  P1.0 	|  P1.0  	|  P1.2  	|
-| CL_TimerA1 	|  n/a  	|  P1.6  	|  P1.1* 	|
-| CL_TimerA2 	|  n/a  	|  P2.2  	|  n/a   	|
-| CL_TimerB0 	|  n/a  	|  P7.7*	|  P2.0* 	|
+| Timer       | G2553,G2452,G2231 | F5529 | FR5969 |
+|------------ | -------	|------- |-------- |
+| CL_TimerA0  |  P1.0 	|  P1.0  |  P1.2  |
+| CL_TimerA1  |  n/a  	|  P1.6  |  P1.1* |
+| CL_TimerA2  |  n/a  	|  P2.2  |  n/a   |
+| CL_TimerB0  |  n/a  	|  P7.7* |  P2.0* |
 
 Pins marked with * are not broken out on the LaunchPad.
 
