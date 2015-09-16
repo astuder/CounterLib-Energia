@@ -6,6 +6,8 @@ This library currently supports MSP430G2553, G2231, G2452, F5529 and FR5969.
 CounterLib leverages timer peripherals and uses I/O as external clock input for a 16 bit counter. 
 Using a Timer instead of interrupts allows to count very fast pulses.
 
+For suggestions, questions, or just showing off what you've built with this library, there's a thread on 43oh: http://forum.43oh.com/topic/8870-hardware-counter-library-for-msp430/
+
 ## Installation
 
 To install this libray in Energia, copy the folder "CounterLib" into "<user home>/Documents/Energia/libraries"
