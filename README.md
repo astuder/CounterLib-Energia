@@ -34,7 +34,7 @@ parameter when declaring the counter. For example:
 
 	Counter<CL_TimerA1> MyCounter; // use timer A1, which uses pin P1.6 as input
 	
-Below a list of supported timers and their pins. Note that not all MCUs support all timers.
+Below a list of supported timers and their pins. Note that not all MCUs support all timers and that some timers may be on multiple pins.
 
 | Timer       | G2553,G2452,G2231 | F5529 | FR5969 | FR6989 |
 |------------ | -------	|------- |-------- |-------| 
