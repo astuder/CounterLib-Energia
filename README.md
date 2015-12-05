@@ -1,7 +1,7 @@
 # CounterLib-Energia
 A library for Energia that counts signal pulses received from an external source, like for example a clock.
 
-This library currently supports MSP430G2553, G2231, G2452, F5529 and FR5969.
+This library currently supports the MSP430G2553, G2231, G2452, F5529, FR5969, and FR6989.
 
 CounterLib leverages timer peripherals and uses I/O as external clock input for a 16 bit counter. 
 Using a Timer instead of interrupts allows to count very fast pulses.
@@ -36,14 +36,18 @@ parameter when declaring the counter. For example:
 	
 Below a list of supported timers and their pins. Note that not all MCUs support all timers.
 
-| Timer       | G2553,G2452,G2231 | F5529 | FR5969 |
-|------------ | -------	|------- |-------- |
-| CL_TimerA0  |  P1.0 	|  P1.0  |  P1.2  |
-| CL_TimerA1  |  n/a  	|  P1.6  |  P1.1* |
-| CL_TimerA2  |  n/a  	|  P2.2  |  n/a   |
-| CL_TimerB0  |  n/a  	|  P7.7* |  P2.0* |
+| Timer       | G2553,G2452,G2231 | F5529 | FR5969 | FR6989 |
+|------------ | -------	|------- |-------- |-------| 
+| CL_TimerA0  |  P1.0 	|  P1.0  |  P1.2  | P1.2^, P6.7#, P7.0# |
+| CL_TimerA1  |  n/a  	|  P1.6  |  P1.1* | P1.1^, P4.4#, P5.2# |
+| CL_TimerA2  |  n/a  	|  P2.2  |  n/a   | n/a |
+| CL_TimerB0  |  n/a  	|  P7.7* |  P2.0* | P2.0, P3.3#, P5.7#|
 
 Pins marked with * are not broken out on the LaunchPad.
+
+Pins marked with ^ are connected to a switch (user button) on the LaunchPad.
+
+Pins marked with # are connected to the LCD on the LaunchPad
 
 ### Dividers
 
@@ -51,7 +55,7 @@ For accurate counting you want a long measurement period, for example 100ms. But
 16 bit counter. For example a 1 MHz signal will count to 65535 (the maximum for 16 bit) in just 65 ms. This is when
 clock dividers come in handy.
 
-Depending on the MCU, the timers have one (G2553, G2452, G2231) or two (F5529, FR5969) dividers. The dividers
+Depending on the MCU, the timers have one (G2553, G2452, G2231) or two (F5529, FR5969, FR6989) dividers. The dividers
 can be set as optional parameter of the start() function.
 
 	MyCounter.start(divider1, divider2);
