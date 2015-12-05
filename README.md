@@ -38,16 +38,12 @@ Below a list of supported timers and their pins. Note that not all MCUs support 
 
 | Timer       | G2553,G2452,G2231 | F5529 | FR5969 | FR6989 |
 |------------ | -------	|------- |-------- |-------| 
-| CL_TimerA0  |  P1.0 	|  P1.0  |  P1.2  | P1.2^, P6.7#, P7.0# |
-| CL_TimerA1  |  n/a  	|  P1.6  |  P1.1* | P1.1^, P4.4#, P5.2# |
+| CL_TimerA0  |  P1.0 	|  P1.0  |  P1.2  | P1.2*, P6.7*, P7.0* |
+| CL_TimerA1  |  n/a  	|  P1.6  |  P1.1* | P1.1*, P4.4*, P5.2* |
 | CL_TimerA2  |  n/a  	|  P2.2  |  n/a   | n/a |
-| CL_TimerB0  |  n/a  	|  P7.7* |  P2.0* | P2.0, P3.3#, P5.7#|
+| CL_TimerB0  |  n/a  	|  P7.7* |  P2.0* | P2.0, P3.3*, P5.7*|
 
-Pins marked with * are not broken out on the LaunchPad.
-
-Pins marked with ^ are connected to a switch (user button) on the LaunchPad.
-
-Pins marked with # are connected to the LCD on the LaunchPad
+Pins marked with * are not broken out on the LaunchPad or are difficult to access.
 
 ### Dividers
 
