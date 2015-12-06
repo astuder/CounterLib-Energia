@@ -58,9 +58,9 @@ Modified by Frank Milburn, December 2015 to include the MSP430FR6989
 
   enum CL_TIMER_t
   {
-    CL_TimerA0,    // FR5969 P1.2                 FR6989 P1.2*, P6.7*, P7.0* 
-    CL_TimerA1,    // FR5969 P1.1*                FR6989 P1.1*, P4.4*, P5.2*
-    CL_TimerB0     // FR5969 P2.0*                FR6989 P2.0, P3.3*, P5.7*
+    CL_TimerA0,    // FR5969 P1.2, FR6989 P1.2*
+    CL_TimerA1,    // FR5969 P1.1*, FR6989 P1.1*
+    CL_TimerB0     // FR5969 P2.0*, FR6989 P2.0
     // Note: Pins with * are not easily accessible on LaunchPads
   };
   
