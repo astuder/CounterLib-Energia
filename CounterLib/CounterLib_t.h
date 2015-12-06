@@ -4,7 +4,8 @@ Created by Adrian Studer, August 2015.
 
 Distributed under MIT License, see license.txt for details.
 
-Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad and bug fixes
+Modified by Frank Milburn, September 2015 to include the MSP430FR5969 and bug fixes
+Modified by Frank Milburn, December 2015 to include the MSP430FR6989
 */
 
 #ifndef CounterLib_T_h
@@ -52,14 +53,15 @@ Modified by Frank Milburn, September 2015 to include the MSP430FR5969 LaunchPad 
   #define CL_TA2CLK_PIN_SETUP  { P2DIR &= ~BIT2; P2SEL |= BIT2; }
   #define CL_TB0CLK_PIN_SETUP  { P7DIR &= ~BIT7; P7SEL |= BIT7; }
 
-// definition of timers and their pins for MSP430FR5969
-#elif defined(__MSP430FR5969__)
+// definition of timers and their pins for MSP430FR5969 and MSP430FR6989
+#elif defined(__MSP430FR5969__) || defined(__MSP430FR6989__)
 
   enum CL_TIMER_t
   {
-    CL_TimerA0,    // FR5969 P1.2
-    CL_TimerA1,    // FR5969 P1.1 (note: pin not easily accessible on LP)
-    CL_TimerB0     // FR5969 P2.0 (note: pin not easily accessible on LP)
+    CL_TimerA0,    // FR5969 P1.2                 FR6989 P1.2*, P6.7*, P7.0* 
+    CL_TimerA1,    // FR5969 P1.1*                FR6989 P1.1*, P4.4*, P5.2*
+    CL_TimerB0     // FR5969 P2.0*                FR6989 P2.0, P3.3*, P5.7*
+    // Note: Pins with * are not easily accessible on LaunchPads
   };
   
   // clk pin setup for each supported timer
