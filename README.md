@@ -144,13 +144,9 @@ accordingly to get back to kHz.
       MyCounter.reset();			// reset counter to zero
       delay(100);					// wait 100 milliseconds
       Serial.print((MyCounter.read() + 5) / 100 * 8);	// read counter, calculate kHz
-	  Serial.println(" kHz");
-	  delay(1000);					// wait one second
+      Serial.println(" kHz");
+      delay(1000);					// wait one second
     }
-
-	MyCounter.reset();
-	delay(100);
-	Serial.print((MyCounter.read() + 5) / 100 * 8);
 
 With these minor changes above, my test setup now reports 744 kHz, which is only 0.2% different from what the 
 oscilloscope measured.
